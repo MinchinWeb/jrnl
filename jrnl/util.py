@@ -52,8 +52,10 @@ def get_password(validator, keychain=None, max_attempts=3):
         prompt("Extremely wrong password.")
         sys.exit(1)
 
+
 def get_keychain(journal_name):
     return keyring.get_password('jrnl', journal_name)
+
 
 def set_keychain(journal_name, password):
     if password is None:
@@ -64,13 +66,16 @@ def set_keychain(journal_name, password):
     elif not TEST:
         keyring.set_password('jrnl', journal_name, password)
 
+
 def u(s):
     """Mock unicode function for python 2 and 3 compatibility."""
     return s if PY3 or type(s) is unicode else unicode(s.encode('string-escape'), "unicode_escape")
 
+
 def py2encode(s):
     """Encode in Python 2, but not in python 3."""
     return s.encode("utf-8") if PY2 and type(s) is unicode else s
+
 
 def prompt(msg):
     """Prints a message to the std err stream defined in util."""
@@ -80,18 +85,22 @@ def prompt(msg):
         msg += "\n"
     STDERR.write(u(msg))
 
+
 def py23_input(msg=""):
     prompt(msg)
     return u(STDIN.readline()).strip()
+
 
 def py23_read(msg=""):
     prompt(msg)
     return u(STDIN.read())
 
+
 def yesno(prompt, default=True):
     prompt = prompt.strip() + (" [Y/n]" if default else " [y/N]")
     raw = py23_input(prompt)
     return {'y': True, 'n': False}.get(raw.lower(), default)
+
 
 def load_and_fix_json(json_path):
     """Tries to load a json object from a file.
@@ -100,19 +109,19 @@ def load_and_fix_json(json_path):
     with open(json_path) as f:
         json_str = f.read()
         log.debug('Configuration file %s read correctly', json_path)
-    config =  None
+    config = None
     try:
         return json.loads(json_str)
     except ValueError as e:
         log.debug('Could not parse configuration %s: %s', json_str, e,
-                exc_info=True)
+                  exc_info=True)
         # Attempt to fix extra ,
         json_str = re.sub(r",[ \n]*}", "}", json_str)
         # Attempt to fix missing ,
         json_str = re.sub(r"([^{,]) *\n *(\")", r"\1,\n \2", json_str)
         try:
-            log.debug('Attempting to reload automatically fixed configuration file %s', 
-                    json_str)
+            log.debug('Attempting to reload automatically fixed configuration file %s',
+                      json_str)
             config = json.loads(json_str)
             with open(json_path, 'w') as f:
                 json.dump(config, f, indent=2)
@@ -124,6 +133,7 @@ def load_and_fix_json(json_path):
             prompt("[There seems to be something wrong with your jrnl config at {0}: {1}]".format(json_path, e.message))
             prompt("[Entry was NOT added to your journal]")
             sys.exit(1)
+
 
 def get_text_from_editor(config, template=""):
     _, tmpfile = tempfile.mkstemp(prefix="jrnl", text=True, suffix=".txt")
@@ -138,9 +148,11 @@ def get_text_from_editor(config, template=""):
         prompt('[Nothing saved to file]')
     return raw
 
+
 def colorize(string):
     """Returns the string wrapped in cyan ANSI escape"""
     return u"\033[36m{}\033[39m".format(string)
+
 
 def slugify(string):
     """Slugifies a string.
@@ -153,6 +165,7 @@ def slugify(string):
     slug = re.sub(r'[-\s]+', '-', no_punctuation)
     return u(slug)
 
+
 def int2byte(i):
     """Converts an integer to a byte.
     This is equivalent to chr() in Python 2 and bytes((i,)) in Python 3."""
@@ -162,4 +175,4 @@ def int2byte(i):
 def byte2int(b):
     """Converts a byte to an integer.
     This is equivalent to ord(bs[0]) on Python 2 and bs[0] on Python 3."""
-    return ord(b)if PY2 else b
+    return ord(b) if PY2 else b
