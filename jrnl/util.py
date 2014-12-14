@@ -11,7 +11,8 @@ if "win32" in sys.platform:
 import re
 import tempfile
 import subprocess
-import codecs
+# import codecs
+import io
 import unicodedata
 import logging
 
@@ -106,7 +107,7 @@ def load_and_fix_json(json_path):
     """Tries to load a json object from a file.
     If that fails, tries to fix common errors (no or extra , at end of the line).
     """
-    with open(json_path) as f:
+    with io.open(json_path) as f:
         json_str = f.read()
         log.debug('Configuration file %s read correctly', json_path)
     config = None
@@ -137,13 +138,17 @@ def load_and_fix_json(json_path):
 
 def get_text_from_editor(config, template=""):
     _, tmpfile = tempfile.mkstemp(prefix="jrnl", text=True, suffix=".txt")
-    with codecs.open(tmpfile, 'w', "utf-8") as f:
+    with io.open(tmpfile, 'w', encoding="utf-8") as f:
         if template:
             f.write(template)
     subprocess.call(config['editor'].split() + [tmpfile])
-    with codecs.open(tmpfile, "r", "utf-8") as f:
+    with io.open(tmpfile, "r", encoding="utf-8") as f:
         raw = f.read()
-    os.remove(tmpfile)
+    try:
+        os.remove(tmpfile)
+    except(PermissionError):
+        # prompt('[Unable to delete temporary file: ' + tmpfile + ']')
+        pass
     if not raw:
         prompt('[Nothing saved to file]')
     return raw
