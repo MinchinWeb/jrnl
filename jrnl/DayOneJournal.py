@@ -53,7 +53,7 @@ class DayOne(Journal.Journal):
                     title, body = (raw[:sep.end()], raw[sep.end():]) if sep else (raw, "")
                     entry = Entry.Entry(self, date, title, body, starred=dict_entry["Starred"])
                     entry.uuid = dict_entry["UUID"]
-                    entry.tags = [self.config['tagsymbols'][0] + tag for tag in dict_entry.get("Tags", [])]
+                    entry.tags = [self.config['tagsymbols'][0] + tag.replace(" ", "_") for tag in dict_entry.get("Tags", [])]
 
                     self.entries.append(entry)
         self.sort()
@@ -69,7 +69,7 @@ class DayOne(Journal.Journal):
                     entry.uuid = uuid.uuid1().hex
 
                 filename = os.path.join(self.config['journal'], "entries", entry.uuid.upper() + ".doentry")
-                
+
                 entry_plist = {
                     'Creation Date': utc_time,
                     'Starred': entry.starred if hasattr(entry, 'starred') else False,
@@ -129,11 +129,14 @@ class DayOne(Journal.Journal):
 
         # Now, update our current entries if they changed
         for entry in entries:
+            # tags in entry body
             entry.parse_tags()
-            matched_entries = [e for e in self.entries if e.uuid.lower() == entry.uuid]
+            matched_entries = [e for e in self.entries if e.uuid.lower() == entry.uuid.lower()]
             if matched_entries:
                 # This entry is an existing entry
                 match = matched_entries[0]
+                # merge existing tags with tags pulled from the entry body
+                entry.tags = list(set(entry.tags + match.tags))
                 if match != entry:
                     self.entries.remove(match)
                     entry.modified = True
