@@ -57,7 +57,7 @@ class DayOne(Journal.Journal):
                     title, body = (raw[:sep.end()], raw[sep.end():]) if sep else (raw, "")
                     entry = Entry.Entry(self, date, title, body, starred=dict_entry["Starred"])
                     entry.uuid = dict_entry["UUID"]
-                    entry.tags = [self.config['tagsymbols'][0] + tag.replace(" ", "_") for tag in dict_entry.get("Tags", [])]
+                    entry.tags = [self.config['tagsymbols'][0] + tag.lower().replace(" ", "_") for tag in dict_entry.get("Tags", [])]
 
                     """Extended DayOne attributes"""
                     try:
