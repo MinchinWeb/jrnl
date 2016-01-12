@@ -48,7 +48,7 @@ class Entry:
         if self._tags is None:
             self._parse_text()
         return self._tags
-    
+
     @staticmethod
     def tag_regex(tagsymbols):
         pattern = r'(?u)(?:^|\s)([{tags}][-+*#/\w]+)'.format(tags=tagsymbols)
@@ -76,15 +76,22 @@ class Entry:
         date_str = self.date.strftime(self.journal.config['timeformat'])
         if not short and self.journal.config['linewrap']:
             title = textwrap.fill(date_str + " " + self.title, self.journal.config['linewrap'])
-            body = "\n".join([
-                textwrap.fill(
-                    (line + " ") if (len(line) == 0) else line,
-                    self.journal.config['linewrap'],
-                    initial_indent="| ",
-                    subsequent_indent="| ",
-                    drop_whitespace=True)
-                for line in self.body.rstrip(" \n").splitlines()
-            ])
+            body = "\n".join(
+                # this re-adds the 'indent' to blank lines
+                ("| ") if (len(line2) == 0) else line2 for line2 in
+                    [textwrap.fill(
+                        line,
+                        self.journal.config['linewrap'],
+                        initial_indent="| ",
+                        subsequent_indent="| ",
+                        # `drop_whitespace=True` removes 'extra' leading spaces,
+                        #    however if has the side effect of nuking blanklines
+                        #    so the 'indent' isn't printed
+                        drop_whitespace=True)
+                    # this `rstrip` only removes spaces and newlines from the end
+                    #    of the entry, i.e. blank lines at the end of the entry
+                    for line in self.body.rstrip(" \n").splitlines()]
+                )
         else:
             title = date_str + " " + self.title.rstrip("\n ")
             body = self.body.rstrip("\n ")
