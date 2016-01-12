@@ -17,7 +17,8 @@ class YAMLExporter(TextExporter):
     def export_entry(cls, entry, to_multifile=True):
         """Returns a markdown representation of a single entry, with YAML front matter."""
         if to_multifile is False:
-            print("{}ERROR{}: YAML export must be to individual files. Please specify a directory to export to.".format("\033[31m", "\033[0m", file=sys.stderr))
+            print("{}ERROR{}: YAML export must be to individual files. Please \
+                specify a directory to export to.".format(ERROR_COLOR, RESET_COLOR, file=sys.stderr))
             return
 
         date_str = entry.date.strftime(entry.journal.config['timeformat'])
@@ -28,12 +29,12 @@ class YAMLExporter(TextExporter):
         # see also Entry.Entry.rag_regex
         multi_tag_regex = re.compile(r'(?u)^\s*([{tags}][-+*#/\w]+\s*)+$'.format(tags=tagsymbols), re.UNICODE)
 
-        '''Increase heading levels in body text'''
+        """Increase heading levels in body text"""
         newbody = ''
         heading = '#'
         previous_line = ''
         warn_on_heading_level = False
-        for line in entry.body.splitlines(True):
+        for line in body.splitlines(True):
             if re.match(r"#+ ", line):
                 """ATX style headings"""
                 newbody = newbody + previous_line + heading + line
@@ -57,27 +58,47 @@ class YAMLExporter(TextExporter):
         newbody = newbody + previous_line   # add very last line
 
         if warn_on_heading_level is True:
-            print("{}WARNING{}: Headings increased past H6 on export - {} {}".format(WARNING_COLOR, RESET_COLOR, date_str, entry.title), file=sys.stderr)
+            print("{}WARNING{}: Headings increased past H6 on export - {} {}"
+                  .format(WARNING_COLOR, RESET_COLOR, date_str, entry.title), file=sys.stderr)
 
         dayone_attributes = ''
         if hasattr(entry, "uuid"):
             dayone_attributes += 'uuid: ' + entry.uuid + '\n'
-            # TODO: copy over pictures, if present
-            # source directory is  entry.journal.config['journal']
-            # output directory is...?
+        if hasattr(entry, 'creator_device_agent') or \
+           hasattr(entry, 'creator_generation_date') or \
+           hasattr(entry, 'creator_host_name') or \
+           hasattr(entry, 'creator_os_agent') or \
+           hasattr(entry, 'creator_software_agent'):
+            dayone_attributes += 'creator:\n'
+        if hasattr(entry, 'creator_device_agent'):
+            dayone_attributes += '    device agent: {}\n'.format(entry.creator_device_agent)
+        if hasattr(entry, 'creator_generation_date'):
+            dayone_attributes += '    generation date: {}\n'.format(str(entry.creator_generation_date))
+        if hasattr(entry, 'creator_host_name'):
+            dayone_attributes += '    host name: {}\n'.format(entry.creator_host_name)
+        if hasattr(entry, 'creator_os_agent'):
+            dayone_attributes += '    os agent: {}\n'.format(entry.creator_os_agent)
+        if hasattr(entry, 'creator_software_agent'):
+            dayone_attributes += '    software agent: {}\n'.format(entry.creator_software_agent)
 
-        return "title: {title}\ndate: {date}\nstared: {stared}\ntags: {tags}\n{dayone} {body} {space}".format(
-            date = date_str,
-            title = entry.title,
-            stared = entry.starred,
-            tags = ', '.join([tag[1:] for tag in entry.tags]),
-            dayone = dayone_attributes,
-            body = newbody,
-            space=""
-        )
+        # TODO: copy over pictures, if present
+        # source directory is  entry.journal.config['journal']
+        # output directory is...?
+
+        return "title: {title}\ndate: {date}\nstared: {stared}\ntags: {tags}\n{dayone} {body} {space}" \
+            .format(
+                date=date_str,
+                title=entry.title,
+                stared=entry.starred,
+                tags=', '.join([tag[1:] for tag in entry.tags]),
+                dayone=dayone_attributes,
+                body=newbody,
+                space=""
+            )
 
     @classmethod
     def export_journal(cls, journal):
         """Returns an error, as YAML export requires a directory as a target."""
-        print("{}ERROR{}: YAML export must be to individual files. Please specify a directory to export to.".format(ERROR_COLOR, RESET_COLOR), file=sys.stderr)
+        print("{}ERROR{}: YAML export must be to individual files. \
+            Please specify a directory to export to.".format(ERROR_COLOR, RESET_COLOR), file=sys.stderr)
         return
